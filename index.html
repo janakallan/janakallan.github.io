@@ -3173,6 +3173,7 @@
             <div class="stat">বর্তমান ব্যালেন্স<b id="qsmsBalAmt">৳0.00</b></div>
             <div class="stat">একাউন্ট অবস্থা<b id="qsmsAccStatus" style="text-transform:capitalize">—</b></div>
             <div class="stat">নন-মাস্কিং রেট<b id="qsmsRateNon">৳0.35</b></div>
+            <div class="stat">নন-মাস্কিং রেট<b id="qsmsRateNon">৳0.28</b></div>
             <div class="stat">মাস্কিং রেট<b id="qsmsRateMask">৳0.55</b></div>
           </div>
         </div>
@@ -4819,6 +4820,20 @@
             if (d.rates) {
               if ($g('qsmsRateNon')) $g('qsmsRateNon').textContent = '৳' + (d.rates.non_masking_english ?? 0.35);
               if ($g('qsmsRateMask')) $g('qsmsRateMask').textContent = '৳' + (d.rates.masking_english ?? 0.55);
+              let rNon = null, rMask = null;
+              if (Array.isArray(d.rates)) {
+                const foundNon = d.rates.find(r => r.type === 'non_masking' || r.sms_type === 'non_masking');
+                if (foundNon) rNon = foundNon.cost ?? foundNon.rate_per_sms;
+                const foundMask = d.rates.find(r => r.type === 'masking' || r.sms_type === 'masking');
+                if (foundMask) rMask = foundMask.cost ?? foundMask.rate_per_sms;
+              } else if (typeof d.rates === 'object') {
+                rNon = d.rates.non_masking ?? d.rates.non_masking_english;
+                rMask = d.rates.masking ?? d.rates.masking_english;
+              }
+              const finalNon = (rNon !== null && rNon !== undefined) ? Number(rNon).toFixed(2) : '0.28';
+              const finalMask = (rMask !== null && rMask !== undefined) ? Number(rMask).toFixed(2) : '0.55';
+              if ($g('qsmsRateNon')) $g('qsmsRateNon').textContent = '৳' + finalNon;
+              if ($g('qsmsRateMask')) $g('qsmsRateMask').textContent = '৳' + finalMask;
             }
             if ($g('qsmsBalanceTime')) $g('qsmsBalanceTime').textContent = '(চেক: ' + new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }) + ')';
             if ($g('qsmsBalanceBox')) $g('qsmsBalanceBox').style.display = 'block';
@@ -4899,6 +4914,7 @@
         const res = await qsmsSendDirect(num, msg);
         if (res.ok) {
           resBox.innerHTML = '<div style="padding:10px 14px;background:var(--okbg);color:var(--ok);border:1px solid var(--ok);border-radius:8px"><b>✅ SMS সফলভাবে পাঠানো হয়েছে!</b><br>ID: <code>' + esc(res.messageId) + '</code> • খরচ: ৳' + (res.cost ?? '0.35') + ' • অবস্থা: ' + esc(res.status) + ' • প্রাপক: ' + esc(res.recipient) + '</div>';
+          resBox.innerHTML = '<div style="padding:10px 14px;background:var(--okbg);color:var(--ok);border:1px solid var(--ok);border-radius:8px"><b>✅ SMS সফলভাবে পাঠানো হয়েছে!</b><br>ID: <code>' + esc(res.messageId) + '</code> • খরচ: ৳' + (res.cost ?? '0.28') + ' • অবস্থা: ' + esc(res.status) + ' • প্রাপক: ' + esc(res.recipient) + '</div>';
           toast('টেস্ট SMS পাঠানো হয়েছে');
           qsmsCheckBalance(false);
         } else {
@@ -4926,6 +4942,7 @@
               return;
             }
             body.innerHTML = list.map(x => '<tr><td><code>' + esc(x.id || x.message_id || '-') + '</code></td><td>' + esc(x.recipient) + '</td><td>' + esc(x.sender_id || '-') + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + esc(x.message) + '">' + esc(x.message) + '</td><td>৳' + (x.cost ?? '0.35') + '</td><td><span class="badge ' + (x.status === 'delivered' ? 'b-ok' : 'b-warn') + '">' + esc(x.status || 'sent') + '</span></td><td style="white-space:nowrap">' + esc(x.created_at || x.sent_at || '-') + '</td></tr>').join('');
+            body.innerHTML = list.map(x => '<tr><td><code>' + esc(x.id || x.message_id || '-') + '</code></td><td>' + esc(x.recipient) + '</td><td>' + esc(x.sender_id || '-') + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + esc(x.message) + '">' + esc(x.message) + '</td><td>৳' + (x.cost ?? '0.28') + '</td><td><span class="badge ' + (x.status === 'delivered' ? 'b-ok' : 'b-warn') + '">' + esc(x.status || 'sent') + '</span></td><td style="white-space:nowrap">' + esc(x.created_at || x.sent_at || '-') + '</td></tr>').join('');
           } else {
             body.innerHTML = '<tr><td colspan="7" class="empty" style="color:var(--bad)">লগ লোড করা যায়নি: ' + esc(qsmsExplainError(res.status, json)) + '</td></tr>';
           }
